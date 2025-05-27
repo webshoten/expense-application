@@ -10,10 +10,11 @@ export default $config({
     };
   },
   async run() {
+    const bucket = new sst.aws.Bucket("MyBucket");
 
     new sst.aws.Remix("MyWeb", {
-      path:"./packages/web",
+      path: "./packages/web",
+      link: [bucket],
     });
-
   },
 });

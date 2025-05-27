@@ -13,6 +13,33 @@
             "skipFiles": [
                 "<node_internals>/**"
             ]
-        }
+        },
+        {
+            "name": "Debug Remix Backend",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "npm run dev",
+            "cwd": "${workspaceFolder}/packages/web"
+        },
+        {
+            "name": "Debug Remix Frontend",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:5173/",
+            "webRoot": "${workspaceFolder}/packages/web/app",
+            "sourceMaps": true
+        },
+        {
+            "name": "Debug Remix Backend and Remix Frontend",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "npm run dev",
+            "cwd": "${workspaceFolder}/packages/web",
+            "serverReadyAction": {
+                "action": "startDebugging",
+                "pattern": "Local: +https?://.+",
+                "name": "Debug Remix Frontend"
+            }
+        },
     ]
 }
