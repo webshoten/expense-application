@@ -5,14 +5,6 @@
 
 declare module "sst" {
   export interface Resource {
-    "MyBucket": {
-      "name": string
-      "type": "sst.aws.Bucket"
-    }
-    "MyWeb": {
-      "type": "sst.aws.Remix"
-      "url": string
-    }
   }
 }
 /// <reference path="sst-env.d.ts" />
