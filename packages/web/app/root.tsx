@@ -8,6 +8,7 @@ import {
 } from '@remix-run/react';
 
 import { ReactNode } from 'react';
+import { FileProvider } from './context/file-provider';
 import UrqlProvider from './context/urql-provider';
 import './tailwind.css';
 
@@ -45,7 +46,9 @@ export function Layout({ children }: { children: ReactNode }) {
 export default function App() {
   return (
     <UrqlProvider>
-      <Outlet />
+      <FileProvider>
+        <Outlet />
+      </FileProvider>
     </UrqlProvider>
   );
 }

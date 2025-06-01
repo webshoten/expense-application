@@ -1,29 +1,78 @@
 /* eslint-disable @next/next/no-img-element */
+import { getPresignedPutUrl } from '@/actions/s3';
 import { CaptureCamera } from '@/components/capture-camera';
+import PathInput from '@/components/path-input';
 import { Button } from '@/components/ui/button';
-import { Link } from '@remix-run/react';
+import { useFile } from '@/context/file-provider';
+import { ActionFunctionArgs } from '@remix-run/node';
+import { useActionData, useNavigate, useSubmit } from '@remix-run/react';
 import { Camera, ImageIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+  const fileName = formData.get('fileName') as string;
+  const fileType = formData.get('fileType') as string;
+  if (!fileName || !fileType) {
+    return {
+      success: false,
+      url: null,
+      message: 'ファイルがありません',
+      status: 400,
+    };
+  }
+  const url = await getPresignedPutUrl({ fileName, fileType });
+  return { success: true, url, status: 200 };
+}
 
 export default function Index() {
   const [showCamera, setShowCamera] = useState(false);
-  const [capturedImage, setCapturedImage] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const submit = useSubmit();
+  const actionData = useActionData<typeof action>();
+  const navigate = useNavigate();
+  const { files, addFile, getFilePreviews, currentId } = useFile();
+
+  useEffect(() => {
+    if (actionData?.success !== true) return;
+    if (!actionData || !actionData?.url) return;
+    if (!currentId) return;
+    if (Object.keys(files).length === 0) return;
+
+    (async () => {
+      try {
+        const response = await fetch(actionData?.url, {
+          method: 'PUT',
+          body: files[currentId].file,
+          headers: {
+            'Content-Type': files[currentId].file.type,
+          },
+        });
+
+        if (response.ok) {
+          console.log('成功');
+        } else {
+          throw new Error('失敗');
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+      }
+    })();
+  }, [actionData]);
 
   const handleCapture = (imageFile: File) => {
-    setCapturedImage(imageFile);
-    // プレビュー用のURLを生成
-    const previewUrl = URL.createObjectURL(imageFile);
-    setImagePreviewUrl(previewUrl);
+    //ファイルをcontextに追加
+    addFile(imageFile);
     setShowCamera(false);
   };
 
-  const handleDelete = () => {
-    if (imagePreviewUrl) {
-      URL.revokeObjectURL(imagePreviewUrl);
-    }
-    setCapturedImage(null);
-    setImagePreviewUrl(null);
+  const handleDelete = () => {};
+
+  const handleUpload = async (id: string) => {
+    if (Object.keys(files).length === 0 || files[id] == null) return;
+    const formData = new FormData();
+    formData.append('fileName', files[id].currentName);
+    formData.append('fileType', files[id].file.type);
+    submit(formData, { method: 'POST' });
   };
 
   return (
@@ -34,22 +83,17 @@ export default function Index() {
           <p className="mt-2 text-gray-600">写真を撮影してみましょう</p>
         </div>
 
-        {capturedImage && imagePreviewUrl ? (
+        {currentId && files[currentId] && getFilePreviews(currentId) ? (
           <div className="space-y-4">
             <div className="overflow-hidden rounded-lg border shadow-lg">
               <img
-                src={imagePreviewUrl || '/placeholder.svg'}
+                src={getFilePreviews(currentId) || '/placeholder.svg'}
                 alt="撮影した写真"
                 className="h-auto w-full object-contain"
               />
             </div>
             <div className="space-y-2">
-              <div className="text-sm text-gray-500">
-                ファイル名: {capturedImage.name}
-              </div>
-              <div className="text-sm text-gray-500">
-                サイズ: {(capturedImage.size / 1024 / 1024).toFixed(2)} MB
-              </div>
+              <PathInput />
             </div>
             <div className="flex gap-2">
               <Button
@@ -59,6 +103,15 @@ export default function Index() {
               >
                 削除
               </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => handleUpload(currentId)}
+                className="flex-1"
+              >
+                アップロード
+              </Button>
+
               <Button onClick={() => setShowCamera(true)} className="flex-1">
                 <Camera className="mr-2 h-4 w-4" />
                 もう一度撮影
@@ -83,11 +136,10 @@ export default function Index() {
                 variant="outline"
                 size="lg"
                 className="flex-1 h-12 flex items-center justify-center"
+                onClick={() => navigate('/camera/gallery')}
               >
-                <Link to="/camera/gallery">
-                  <ImageIcon className="mr-2 h-5 w-5" />
-                  ギャラリー
-                </Link>
+                <ImageIcon className="mr-2 h-5 w-5" />
+                ギャラリー
               </Button>
             </div>
           </div>
