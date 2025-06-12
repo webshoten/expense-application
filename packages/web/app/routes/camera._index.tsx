@@ -11,9 +11,9 @@ import { useEffect, useState } from 'react';
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
-  const fileName = formData.get('fileName') as string;
+  const key = formData.get('key') as string;
   const fileType = formData.get('fileType') as string;
-  if (!fileName || !fileType) {
+  if (!key || !fileType) {
     return {
       success: false,
       url: null,
@@ -21,7 +21,7 @@ export async function action({ request }: ActionFunctionArgs) {
       status: 400,
     };
   }
-  const url = await getPresignedPutUrl({ fileName, fileType });
+  const url = await getPresignedPutUrl({ key, fileType });
   return { success: true, url, status: 200 };
 }
 
@@ -30,7 +30,8 @@ export default function Index() {
   const submit = useSubmit();
   const actionData = useActionData<typeof action>();
   const navigate = useNavigate();
-  const { files, addFile, getFilePreviews, currentId } = useFile();
+  const { files, addFile, getFilePreviews, currentId, setCurrentId } =
+    useFile();
 
   useEffect(() => {
     if (actionData?.success !== true) return;
@@ -65,12 +66,11 @@ export default function Index() {
     setShowCamera(false);
   };
 
-  const handleDelete = () => {};
-
   const handleUpload = async (id: string) => {
     if (Object.keys(files).length === 0 || files[id] == null) return;
+    if (files[id].path == null || files[id].currentName == null) return;
     const formData = new FormData();
-    formData.append('fileName', files[id].currentName);
+    formData.append('key', `${files[id].path}/${files[id].currentName}`);
     formData.append('fileType', files[id].file.type);
     submit(formData, { method: 'POST' });
   };
@@ -98,10 +98,13 @@ export default function Index() {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={handleDelete}
+                onClick={() => {
+                  setCurrentId(null);
+                  navigate('/camera');
+                }}
                 className="flex-1"
               >
-                削除
+                もどる
               </Button>
 
               <Button

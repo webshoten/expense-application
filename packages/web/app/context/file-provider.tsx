@@ -16,7 +16,7 @@ type FileContextType = {
   renameFile: (id: string, newName: string) => void;
   renamePath: (id: string, newPath: string) => void;
   getFilePreviews: (id: string) => string | undefined;
-  setCurrentId: (id: string) => void;
+  setCurrentId: (id: string | null) => void;
   currentId: string | null;
 };
 
@@ -26,9 +26,11 @@ export function FileProvider({ children }: { children: ReactNode }) {
   const [files, setFiles] = useState<Record<string, FileInfo>>({});
   const [id, setId] = useState<string | null>(null);
 
-  const setCurrentId = (id: string) => {
+  const setCurrentId = (id: string | null) => {
     setId(id);
   };
+
+  const yyyymm = new Date().toISOString().slice(0, 7).replace(/-/, '');
 
   // ファイルを追加
   const addFile = (newFile: File) => {
@@ -40,7 +42,7 @@ export function FileProvider({ children }: { children: ReactNode }) {
           file: newFile,
           originalName: newFile.name,
           currentName: newFile.name,
-          path: '/',
+          path: yyyymm,
           lastModified: newFile.lastModified,
         },
       };
