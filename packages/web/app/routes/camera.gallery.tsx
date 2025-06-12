@@ -1,11 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 import { getPresignedGetUrl, listAllObjects } from '@/actions/s3';
 import ImageDialog from '@/components/image-dialog';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { ThumbnailCard } from '@/components/thumbnail-card';
 import { _Object } from '@aws-sdk/client-s3';
 import { LoaderFunction } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
-import { Calendar, FileImage, HardDrive } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '~/components/ui/badge';
 
@@ -52,18 +52,6 @@ export default function CameraGalleryRoute() {
     return grouped;
   };
 
-  // ファイルサイズを読みやすい形式に変換
-  const formatFileSize = (bytes: number | undefined) => {
-    if (bytes == null) return '0 Bytes';
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return (
-      Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-    );
-  };
-
   // 月の表示名を生成
   const formatMonthName = (monthKey: string) => {
     if (monthKey.length === 6) {
@@ -72,18 +60,6 @@ export default function CameraGalleryRoute() {
       return `${year}年${Number.parseInt(month)}月`;
     }
     return monthKey;
-  };
-
-  // 日付をフォーマット
-  const formatDate = (dateString: Date | undefined) => {
-    if (dateString == null) return '';
-    return new Date(dateString).toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   const groupedImages = groupByMonth(objects);
@@ -112,42 +88,13 @@ export default function CameraGalleryRoute() {
 
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {groupedImages[monthKey].map((image, index) => (
-                  <ImageDialog imageObject={selectedImage}>
-                    <Card
-                      key={image.Key}
-                      className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                  <ImageDialog key={index} selectedImage={selectedImage}>
+                    <ThumbnailCard
+                      image={image}
                       onClick={() => {
                         setSelectedImage(image);
                       }}
-                    >
-                      <CardContent className="p-0">
-                        <div className="relative">
-                          <img
-                            src={image.presignedUrl || '/placeholder.svg'}
-                            alt={`Image ${index + 1}`}
-                            onError={(e) => {
-                              e.currentTarget.src = '/images/placeholder.jpg';
-                            }}
-                            className="w-fit"
-                          />
-                        </div>
-                      </CardContent>
-                      <CardHeader className="p-3">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <FileImage className="w-3 h-3" />
-                            <span>{image?.Key?.split('/')[1]}</span>
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <HardDrive className="w-3 h-3" />
-                            <span>{formatFileSize(image?.Size)}</span>
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {formatDate(image?.LastModified)}
-                          </div>
-                        </div>
-                      </CardHeader>
-                    </Card>
+                    />
                   </ImageDialog>
                 ))}
               </div>

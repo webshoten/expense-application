@@ -13,10 +13,10 @@ import { ReactNode } from 'react';
 
 export default function ImageDialog({
   children,
-  imageObject,
+  selectedImage,
 }: {
   children: ReactNode;
-  imageObject: ImageObject | null;
+  selectedImage: ImageObject | null;
 }) {
   return (
     <Dialog>
@@ -30,8 +30,8 @@ export default function ImageDialog({
         </DialogHeader>
         <div className="flex items-center justify-center h-[200px]">
           <img
-            src={imageObject?.presignedUrl}
-            alt={imageObject?.Key?.split('/').pop() || imageObject?.Key}
+            src={selectedImage?.presignedUrl}
+            alt={selectedImage?.Key?.split('/').pop() || selectedImage?.Key}
             onError={(e) => {
               e.currentTarget.src = '/images/placeholder.jpg';
             }}
