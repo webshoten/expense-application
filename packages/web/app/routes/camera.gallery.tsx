@@ -76,7 +76,7 @@ export default function CameraGalleryRoute() {
 
   useEffect(() => {
     if (actionData) {
-      debugger;
+      console.log('action done');
     }
   }, [actionData]);
 
