@@ -8,6 +8,7 @@ import {
 } from '@remix-run/react';
 
 import { ReactNode } from 'react';
+import { CameraProvider } from './context/camera-provider';
 import { FileProvider } from './context/file-provider';
 import UrqlProvider from './context/urql-provider';
 import './tailwind.css';
@@ -47,7 +48,9 @@ export default function App() {
   return (
     <UrqlProvider>
       <FileProvider>
-        <Outlet />
+        <CameraProvider>
+          <Outlet />
+        </CameraProvider>
       </FileProvider>
     </UrqlProvider>
   );

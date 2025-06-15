@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ImageObject } from '@/routes/camera.gallery';
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 
 export default function ImageDialog({
   children,
@@ -18,8 +18,10 @@ export default function ImageDialog({
   children: ReactNode;
   selectedImage: ImageObject | null;
 }) {
+  const [open, setOpen] = useState<boolean>(false);
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -28,19 +30,21 @@ export default function ImageDialog({
             これはダイアログの説明文です。オーバーレイをクリックするか、Escキーを押すとダイアログが閉じます。
           </DialogDescription>
         </DialogHeader>
-        <div className="flex items-center justify-center h-[200px]">
+        <div className="flex items-center justify-center h-fit">
           <img
             src={selectedImage?.presignedUrl}
             alt={selectedImage?.Key?.split('/').pop() || selectedImage?.Key}
             onError={(e) => {
               e.currentTarget.src = '/images/placeholder.jpg';
             }}
-            className="object-contain "
+            className="object-contain"
           />
         </div>
         <div className="flex justify-end space-x-2">
-          <Button variant="outline">キャンセル</Button>
-          <Button>保存</Button>
+          <Button onClick={() => setOpen(false)} variant="outline">
+            キャンセル
+          </Button>
+          <Button>削除</Button>
         </div>
       </DialogContent>
     </Dialog>

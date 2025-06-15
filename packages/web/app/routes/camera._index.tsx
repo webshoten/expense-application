@@ -2,12 +2,12 @@
 import { getPresignedPutUrl } from '@/actions/s3';
 import { CaptureCamera } from '@/components/capture-camera';
 import PathInput from '@/components/path-input';
-import { Button } from '@/components/ui/button';
+import { useCamera } from '@/context/camera-provider';
 import { useFile } from '@/context/file-provider';
 import { ActionFunctionArgs } from '@remix-run/node';
-import { useActionData, useNavigate, useSubmit } from '@remix-run/react';
-import { Camera, ImageIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useActionData, useSubmit } from '@remix-run/react';
+import { Camera } from 'lucide-react';
+import { useEffect } from 'react';
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
@@ -26,12 +26,10 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function Index() {
-  const [showCamera, setShowCamera] = useState(false);
   const submit = useSubmit();
   const actionData = useActionData<typeof action>();
-  const navigate = useNavigate();
-  const { files, addFile, getFilePreviews, currentId, setCurrentId } =
-    useFile();
+  const { files, addFile, getFilePreviews, currentId } = useFile();
+  const { isShowCamera, showCamera } = useCamera();
 
   useEffect(() => {
     if (actionData?.success !== true) return;
@@ -63,7 +61,7 @@ export default function Index() {
   const handleCapture = (imageFile: File) => {
     //ファイルをcontextに追加
     addFile(imageFile);
-    setShowCamera(false);
+    showCamera(false);
   };
 
   const handleUpload = async (id: string) => {
@@ -93,32 +91,7 @@ export default function Index() {
               />
             </div>
             <div className="space-y-2">
-              <PathInput />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setCurrentId(null);
-                  navigate('/camera');
-                }}
-                className="flex-1"
-              >
-                もどる
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => handleUpload(currentId)}
-                className="flex-1"
-              >
-                アップロード
-              </Button>
-
-              <Button onClick={() => setShowCamera(true)} className="flex-1">
-                <Camera className="mr-2 h-4 w-4" />
-                もう一度撮影
-              </Button>
+              <PathInput onUpload={() => handleUpload(currentId)} />
             </div>
           </div>
         ) : (
@@ -126,33 +99,14 @@ export default function Index() {
             <div className="rounded-full bg-gray-100 p-8">
               <Camera className="h-16 w-16 text-gray-400" />
             </div>
-            <div className="flex w-full gap-2">
-              <Button
-                size="lg"
-                onClick={() => setShowCamera(true)}
-                className="flex-1 h-12 flex items-center justify-center"
-              >
-                <Camera className="mr-2 h-5 w-5" />
-                カメラを起動
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="flex-1 h-12 flex items-center justify-center"
-                onClick={() => navigate('/camera/gallery')}
-              >
-                <ImageIcon className="mr-2 h-5 w-5" />
-                ギャラリー
-              </Button>
-            </div>
           </div>
         )}
       </div>
 
-      {showCamera && (
+      {isShowCamera && (
         <CaptureCamera
           onCapture={handleCapture}
-          onClose={() => setShowCamera(false)}
+          onClose={() => showCamera(false)}
         />
       )}
     </main>

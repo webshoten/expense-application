@@ -1,18 +1,21 @@
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useFile } from '@/context/file-provider';
+import { Button } from './ui/button';
 
-export default function PathInput() {
+export default function PathInput({ onUpload }: { onUpload: () => void }) {
   const { renamePath, currentId, renameFile, files } = useFile();
 
   return (
-    <Card className="w-full max-w-md p-2">
+    <div className="w-full max-w-md p-2">
       {currentId && (
-        <CardContent className="space-y-2">
-          <div className="space-y-2">
-            <Label htmlFor="yearMonth">年月 (yyyymm)</Label>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-row ">
+            <Label className="flex items-center w-28" htmlFor="yearMonth">
+              年月
+            </Label>
             <Input
+              className="mt-0"
               id="yearMonth"
               type="text"
               placeholder="202412"
@@ -22,8 +25,10 @@ export default function PathInput() {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="fileName">ファイル名</Label>
+          <div className="flex flex-row">
+            <Label className="flex items-center  w-28" htmlFor="fileName">
+              ファイル名
+            </Label>
             <Input
               id="fileName"
               type="text"
@@ -32,8 +37,18 @@ export default function PathInput() {
               onChange={(e) => renameFile(currentId, e.target.value)}
             />
           </div>
-        </CardContent>
+
+          <div className="space-y-2 w-full">
+            <Button
+              variant="outline"
+              onClick={onUpload}
+              className="flex-1 w-full"
+            >
+              アップロード
+            </Button>
+          </div>
+        </div>
       )}
-    </Card>
+    </div>
   );
 }
