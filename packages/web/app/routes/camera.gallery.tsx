@@ -2,12 +2,12 @@
 import { deleteObject, getPresignedGetUrl, listAllObjects } from '@/actions/s3';
 import ImageDialog from '@/components/image-dialog';
 import { ThumbnailCard } from '@/components/thumbnail-card';
+import { Badge } from '@/components/ui/badge';
 import { _Object } from '@aws-sdk/client-s3';
 import { ActionFunctionArgs, LoaderFunction } from '@remix-run/node';
 import { useActionData, useLoaderData, useSubmit } from '@remix-run/react';
 import { Calendar } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Badge } from '~/components/ui/badge';
 
 export type ImageObject = _Object & { presignedUrl: string };
 type LoaderData = {

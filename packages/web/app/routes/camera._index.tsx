@@ -4,9 +4,10 @@ import { CaptureCamera } from '@/components/capture-camera';
 import PathInput from '@/components/path-input';
 import { useFile } from '@/context/file-provider';
 import { usePageSwitch } from '@/context/page-switch-provider';
+import { useToast } from '@/hooks/use-toast';
 import { ActionFunctionArgs } from '@remix-run/node';
 import { useActionData, useSubmit } from '@remix-run/react';
-import { Camera } from 'lucide-react';
+import { Camera, CheckCircle } from 'lucide-react';
 import { useEffect } from 'react';
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -27,9 +28,12 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function Index() {
   const submit = useSubmit();
+  const { toast } = useToast();
   const actionData = useActionData<typeof action>();
-  const { files, addFile, getFilePreviews, currentId } = useFile();
-  const { isShowCamera, showCamera, isShowPrevious } = usePageSwitch();
+  const { files, addFile, getFilePreviews, currentId, setCurrentId } =
+    useFile();
+  const { isShowCamera, showCamera, isShowPrevious, showPrevious } =
+    usePageSwitch();
 
   useEffect(() => {
     if (actionData?.success !== true) return;
@@ -49,6 +53,18 @@ export default function Index() {
 
         if (response.ok) {
           console.log('成功');
+
+          toast({
+            title: '成功しました！',
+            description: '操作が正常に完了しました。',
+            variant: 'default',
+            action: (
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              </div>
+            ),
+          });
+          setCurrentId(null);
         } else {
           throw new Error('失敗');
         }
@@ -62,6 +78,7 @@ export default function Index() {
     //ファイルをcontextに追加
     addFile(imageFile);
     showCamera(false);
+    showPrevious(true);
   };
 
   const handleUpload = async (id: string) => {

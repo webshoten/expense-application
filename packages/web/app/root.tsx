@@ -8,6 +8,7 @@ import {
 } from '@remix-run/react';
 
 import { ReactNode } from 'react';
+import { Toaster } from './components/ui/toaster';
 import { FileProvider } from './context/file-provider';
 import { PageSwitchProvider } from './context/page-switch-provider';
 import UrqlProvider from './context/urql-provider';
@@ -50,6 +51,7 @@ export default function App() {
       <FileProvider>
         <PageSwitchProvider>
           <Outlet />
+          <Toaster />
         </PageSwitchProvider>
       </FileProvider>
     </UrqlProvider>
