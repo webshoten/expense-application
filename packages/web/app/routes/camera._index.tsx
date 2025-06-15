@@ -2,8 +2,8 @@
 import { getPresignedPutUrl } from '@/actions/s3';
 import { CaptureCamera } from '@/components/capture-camera';
 import PathInput from '@/components/path-input';
-import { useCamera } from '@/context/camera-provider';
 import { useFile } from '@/context/file-provider';
+import { usePageSwitch } from '@/context/page-switch-provider';
 import { ActionFunctionArgs } from '@remix-run/node';
 import { useActionData, useSubmit } from '@remix-run/react';
 import { Camera } from 'lucide-react';
@@ -29,7 +29,7 @@ export default function Index() {
   const submit = useSubmit();
   const actionData = useActionData<typeof action>();
   const { files, addFile, getFilePreviews, currentId } = useFile();
-  const { isShowCamera, showCamera } = useCamera();
+  const { isShowCamera, showCamera, isShowPrevious } = usePageSwitch();
 
   useEffect(() => {
     if (actionData?.success !== true) return;
@@ -77,11 +77,17 @@ export default function Index() {
     <main className="container mx-auto flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold">カメラアプリ</h1>
+          <h1 className="text-3xl font-bold">
+            {isShowPrevious ? (
+              <span>直近の写真</span>
+            ) : (
+              <span>カメラアプリ</span>
+            )}
+          </h1>
           <p className="mt-2 text-gray-600">写真を撮影してみましょう</p>
         </div>
 
-        {currentId && files[currentId] && getFilePreviews(currentId) ? (
+        {currentId && files[currentId] && isShowPrevious ? (
           <div className="space-y-4">
             <div className="overflow-hidden rounded-lg border shadow-lg">
               <img

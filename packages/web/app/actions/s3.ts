@@ -2,6 +2,7 @@ import { Resource } from "sst";
 
 import {
     type _Object,
+    DeleteObjectCommand,
     GetObjectCommand,
     ListObjectsV2Command,
     PutObjectCommand,
@@ -79,5 +80,24 @@ export const getPresignedGetUrl = async (
     } catch (error) {
         console.error("Error generating upload URL:", error);
         throw error;
+    }
+};
+
+/**
+ * ファイル削除実行
+ */
+export const deleteObject = async ({ key }: { key: string }) => {
+    try {
+        const data = await s3Client.send(
+            new DeleteObjectCommand({
+                Bucket: Resource.MyBucket.name!,
+                Key: key,
+            }),
+        );
+        console.log("ファイル削除成功", data);
+        return data;
+    } catch (err) {
+        console.error("ファイル削除エラー", err);
+        throw err;
     }
 };

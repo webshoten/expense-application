@@ -1,12 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
-import { getPresignedGetUrl, listAllObjects } from '@/actions/s3';
+import { deleteObject, getPresignedGetUrl, listAllObjects } from '@/actions/s3';
 import ImageDialog from '@/components/image-dialog';
 import { ThumbnailCard } from '@/components/thumbnail-card';
 import { _Object } from '@aws-sdk/client-s3';
-import { LoaderFunction } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { ActionFunctionArgs, LoaderFunction } from '@remix-run/node';
+import { useActionData, useLoaderData, useSubmit } from '@remix-run/react';
 import { Calendar } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge } from '~/components/ui/badge';
 
 export type ImageObject = _Object & { presignedUrl: string };
@@ -33,8 +33,17 @@ export const loader: LoaderFunction = async () => {
   });
 };
 
+export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+  const key = formData.get('key') as string;
+  const response = await deleteObject({ key });
+  return { success: true, response, status: 200 };
+}
+
 export default function CameraGalleryRoute() {
   const { objects } = useLoaderData<LoaderData>();
+  const submit = useSubmit();
+  const actionData = useActionData<typeof action>();
 
   const [selectedImage, setSelectedImage] = useState<ImageObject | null>(null);
 
@@ -65,6 +74,12 @@ export default function CameraGalleryRoute() {
   const groupedImages = groupByMonth(objects);
   const sortedMonths = Object.keys(groupedImages).sort().reverse(); // 新しい月から表示
 
+  useEffect(() => {
+    if (actionData) {
+      debugger;
+    }
+  }, [actionData]);
+
   return (
     <>
       <main className="container mx-auto flex min-h-screen flex-col items-center justify-center p-4">
@@ -88,7 +103,15 @@ export default function CameraGalleryRoute() {
 
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {groupedImages[monthKey].map((image, index) => (
-                  <ImageDialog key={index} selectedImage={selectedImage}>
+                  <ImageDialog
+                    key={index}
+                    selectedImage={selectedImage}
+                    onDelete={() => {
+                      const formData = new FormData();
+                      formData.append('key', selectedImage?.Key ?? '');
+                      submit(formData, { method: 'POST' });
+                    }}
+                  >
                     <ThumbnailCard
                       image={image}
                       onClick={() => {
