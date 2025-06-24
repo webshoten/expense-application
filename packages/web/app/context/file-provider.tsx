@@ -7,7 +7,9 @@ type FileInfo = {
   originalName: string; // 元のファイル名
   currentName: string; // 現在のファイル名（変更可能）
   path: string; // ファイルパス
+  url: string | null;
   lastModified: number; // 最終更新日時
+  isUploaded: boolean;
 };
 
 type FileContextType = {
@@ -18,6 +20,8 @@ type FileContextType = {
   getFilePreviews: (id: string) => string | undefined;
   setCurrentId: (id: string | null) => void;
   currentId: string | null;
+  isUploaded: (id: string) => void;
+  updateUrl: ({ currentId, url }: { currentId: string; url: string }) => void;
 };
 
 const FileContext = createContext<FileContextType | undefined>(undefined);
@@ -44,10 +48,27 @@ export function FileProvider({ children }: { children: ReactNode }) {
           currentName: newFile.name,
           path: yyyymm,
           lastModified: newFile.lastModified,
+          isUploaded: false,
+          url: null,
         },
       };
     });
     setId(id);
+  };
+
+  const updateUrl = ({
+    currentId,
+    url,
+  }: {
+    currentId: string;
+    url: string;
+  }) => {
+    setFiles((prev) => {
+      return {
+        ...prev,
+        [currentId]: { ...prev[currentId], url },
+      };
+    });
   };
 
   // ファイル名を変更
@@ -81,6 +102,19 @@ export function FileProvider({ children }: { children: ReactNode }) {
     return URL.createObjectURL(files[id].file);
   };
 
+  const isUploaded = (id: string) => {
+    if (!files[id]) return;
+    setFiles((prev) => {
+      return {
+        ...prev,
+        [id]: {
+          ...prev[id],
+          isUploaded: true,
+        },
+      };
+    });
+  };
+
   return (
     <FileContext.Provider
       value={{
@@ -91,6 +125,8 @@ export function FileProvider({ children }: { children: ReactNode }) {
         renamePath,
         setCurrentId,
         currentId: id,
+        isUploaded,
+        updateUrl,
       }}
     >
       {children}

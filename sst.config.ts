@@ -10,11 +10,21 @@ export default $config({
     };
   },
   async run() {
+    /**
+     *  S3
+     */
     const bucket = new sst.aws.Bucket("MyBucket");
 
+    /**
+     *  Remix(CloudFront+Lambda+s3)
+     */
     new sst.aws.Remix("MyWeb", {
       path: "./packages/web",
       link: [bucket],
+      environment: {
+        GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+        BUCKET_NAME: bucket.name,
+      },
     });
   },
 });

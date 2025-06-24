@@ -1,11 +1,11 @@
-import type { MetaFunction } from "@remix-run/node";
-import { gql, useQuery } from "urql";
-import type { Employee } from "../graphql/schema";
+import type { MetaFunction } from '@remix-run/node';
+import { gql, useQuery } from 'urql';
+import type { Employee } from '../graphql/schema';
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "New Remix App" },
-    { name: "description", content: "Welcome to Remix!" },
+    { title: 'New Remix App' },
+    { name: 'description', content: 'Welcome to Remix!' },
   ];
 };
 
@@ -17,16 +17,16 @@ interface EmployeeQueryVariables {
   id: number;
 }
 
-export default function Index() {
-  const EmployeeQuery = gql`
-    query ($id: Int!) {
-      employee(id: $id) {
-        id
-        name
-      }
+const EmployeeQuery = gql`
+  query ($id: Int!) {
+    employee(id: $id) {
+      id
+      name
     }
-  `;
+  }
+`;
 
+export default function Index() {
   const [result] = useQuery<EmployeeQueryResult, EmployeeQueryVariables>({
     query: EmployeeQuery,
     variables: {

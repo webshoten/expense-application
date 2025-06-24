@@ -1,13 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 import { getPresignedPutUrl } from '@/actions/s3';
+import { CameraAppLayout } from '@/components/camera-app-layout';
 import { CaptureCamera } from '@/components/capture-camera';
-import PathInput from '@/components/path-input';
+import { PreviousImageLayout } from '@/components/previous-image-layout';
 import { useFile } from '@/context/file-provider';
 import { usePageSwitch } from '@/context/page-switch-provider';
+import { analyzeInvoiceClient } from '@/graphql/analize-invoice-client';
+import { getS3PresignedUrlClient } from '@/graphql/get-s3-presigned-url-client';
 import { useToast } from '@/hooks/use-toast';
 import { ActionFunctionArgs } from '@remix-run/node';
 import { useActionData, useSubmit } from '@remix-run/react';
-import { Camera, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { useEffect } from 'react';
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -23,6 +26,7 @@ export async function action({ request }: ActionFunctionArgs) {
     };
   }
   const url = await getPresignedPutUrl({ key, fileType });
+
   return { success: true, url, status: 200 };
 }
 
@@ -30,10 +34,12 @@ export default function Index() {
   const submit = useSubmit();
   const { toast } = useToast();
   const actionData = useActionData<typeof action>();
-  const { files, addFile, getFilePreviews, currentId, setCurrentId } =
+  const { files, addFile, currentId, isUploaded, updateUrl, renameFile } =
     useFile();
   const { isShowCamera, showCamera, isShowPrevious, showPrevious } =
     usePageSwitch();
+  const { analyzeInvoice } = analyzeInvoiceClient();
+  const { getS3PresignedUrl } = getS3PresignedUrlClient();
 
   useEffect(() => {
     if (actionData?.success !== true) return;
@@ -43,7 +49,7 @@ export default function Index() {
 
     (async () => {
       try {
-        const response = await fetch(actionData?.url, {
+        await fetch(actionData?.url, {
           method: 'PUT',
           body: files[currentId].file,
           headers: {
@@ -51,9 +57,13 @@ export default function Index() {
           },
         });
 
-        if (response.ok) {
-          console.log('成功');
+        const response = await getS3PresignedUrl({
+          key: files[currentId].path + '/' + files[currentId].currentName,
+        });
 
+        if (!response.error && response?.data?.getS3PresignedUrl?.url) {
+          console.log('成功');
+          updateUrl({ url: response?.data?.getS3PresignedUrl?.url, currentId });
           toast({
             title: '成功しました！',
             description: '操作が正常に完了しました。',
@@ -64,7 +74,6 @@ export default function Index() {
               </div>
             ),
           });
-          setCurrentId(null);
         } else {
           throw new Error('失敗');
         }
@@ -81,50 +90,44 @@ export default function Index() {
     showPrevious(true);
   };
 
-  const handleUpload = async (id: string) => {
-    if (Object.keys(files).length === 0 || files[id] == null) return;
-    if (files[id].path == null || files[id].currentName == null) return;
+  const handleUpload = async (currentId: string) => {
+    if (Object.keys(files).length === 0 || files[currentId] == null) return;
+    if (files[currentId].path == null || files[currentId].currentName == null)
+      return;
+
+    isUploaded(currentId);
+
     const formData = new FormData();
-    formData.append('key', `${files[id].path}/${files[id].currentName}`);
-    formData.append('fileType', files[id].file.type);
+    formData.append(
+      'key',
+      `${files[currentId].path}/${files[currentId].currentName}`,
+    );
+    formData.append('fileType', files[currentId].file.type);
     submit(formData, { method: 'POST' });
+  };
+
+  const handleAI = async (currentId: string, action: 'ファイル名を生成') => {
+    if (files[currentId].url == null) return;
+    const result = await analyzeInvoice({
+      imageUrl: files[currentId].url,
+    });
+    renameFile(
+      currentId,
+      result.data?.analyzeInvoice.yyyymmdd +
+        '_' +
+        result.data?.analyzeInvoice.company +
+        '_' +
+        result.data?.analyzeInvoice.amount,
+    );
   };
 
   return (
     <main className="container mx-auto flex min-h-screen flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">
-            {isShowPrevious ? (
-              <span>直近の写真</span>
-            ) : (
-              <span>カメラアプリ</span>
-            )}
-          </h1>
-          <p className="mt-2 text-gray-600">写真を撮影してみましょう</p>
-        </div>
-
-        {currentId && files[currentId] && isShowPrevious ? (
-          <div className="space-y-4">
-            <div className="overflow-hidden rounded-lg border shadow-lg">
-              <img
-                src={getFilePreviews(currentId) || '/placeholder.svg'}
-                alt="撮影した写真"
-                className="h-auto w-full object-contain"
-              />
-            </div>
-            <div className="space-y-2">
-              <PathInput onUpload={() => handleUpload(currentId)} />
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center space-y-6 text-center">
-            <div className="rounded-full bg-gray-100 p-8">
-              <Camera className="h-16 w-16 text-gray-400" />
-            </div>
-          </div>
-        )}
-      </div>
+      {isShowPrevious ? (
+        <PreviousImageLayout onUpload={handleUpload} onAI={handleAI} />
+      ) : (
+        <CameraAppLayout />
+      )}
 
       {isShowCamera && (
         <CaptureCamera

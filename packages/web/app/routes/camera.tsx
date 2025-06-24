@@ -7,7 +7,7 @@ import { Camera, ImageIcon, Images } from 'lucide-react';
 export default function CameraLayout() {
   const navigate = useNavigate();
   const { showCamera, showPrevious } = usePageSwitch();
-  const { files, addFile, getFilePreviews, currentId } = useFile();
+  const { files, currentId } = useFile();
 
   return (
     <>
