@@ -3,6 +3,7 @@ import { Resource } from "sst";
 import {
     type _Object,
     DeleteObjectCommand,
+    DeleteObjectsCommand,
     GetObjectCommand,
     ListObjectsV2Command,
     PutObjectCommand,
@@ -19,15 +20,34 @@ export const s3Client = new S3Client({
  * ファイルアップロード用PresignedUrl発行
  */
 export const getPresignedPutUrl = async (
-    { key, fileType }: { key: string; fileType: string },
+    { newKey, oldKey, fileType }: {
+        newKey: string;
+        oldKey: string;
+        fileType: string;
+    },
 ) => {
     try {
+        /**
+         *  ファイル名の更新がある場合は古いファイルは削除
+         */
+        if (oldKey !== newKey) {
+            const deleteCommand = new DeleteObjectsCommand({
+                Bucket: Resource.MyBucket.name!,
+                Delete: {
+                    Objects: [
+                        { Key: oldKey },
+                    ],
+                },
+            });
+            const res = await s3Client.send(deleteCommand);
+            console.log(res);
+        }
+
         const command = new PutObjectCommand({
             Bucket: Resource.MyBucket.name!,
-            Key: key,
+            Key: newKey,
             ContentType: fileType,
         });
-
         const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
 
         return url;

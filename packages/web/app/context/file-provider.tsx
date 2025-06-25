@@ -21,7 +21,7 @@ type FileContextType = {
   setCurrentId: (id: string | null) => void;
   currentId: string | null;
   isUploaded: (id: string) => void;
-  updateUrl: ({ currentId, url }: { currentId: string; url: string }) => void;
+  setUrl: ({ currentId, url }: { currentId: string; url: string }) => void;
 };
 
 const FileContext = createContext<FileContextType | undefined>(undefined);
@@ -56,13 +56,7 @@ export function FileProvider({ children }: { children: ReactNode }) {
     setId(id);
   };
 
-  const updateUrl = ({
-    currentId,
-    url,
-  }: {
-    currentId: string;
-    url: string;
-  }) => {
+  const setUrl = ({ currentId, url }: { currentId: string; url: string }) => {
     setFiles((prev) => {
       return {
         ...prev,
@@ -126,7 +120,7 @@ export function FileProvider({ children }: { children: ReactNode }) {
         setCurrentId,
         currentId: id,
         isUploaded,
-        updateUrl,
+        setUrl,
       }}
     >
       {children}

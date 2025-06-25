@@ -15,9 +15,10 @@ import { useEffect } from 'react';
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
-  const key = formData.get('key') as string;
+  const newKey = formData.get('newKey') as string;
+  const oldKey = formData.get('oldKey') as string;
   const fileType = formData.get('fileType') as string;
-  if (!key || !fileType) {
+  if (!newKey || !oldKey || !fileType) {
     return {
       success: false,
       url: null,
@@ -25,8 +26,7 @@ export async function action({ request }: ActionFunctionArgs) {
       status: 400,
     };
   }
-  const url = await getPresignedPutUrl({ key, fileType });
-
+  const url = await getPresignedPutUrl({ newKey, oldKey, fileType });
   return { success: true, url, status: 200 };
 }
 
@@ -34,7 +34,7 @@ export default function Index() {
   const submit = useSubmit();
   const { toast } = useToast();
   const actionData = useActionData<typeof action>();
-  const { files, addFile, currentId, isUploaded, updateUrl, renameFile } =
+  const { files, addFile, currentId, isUploaded, setUrl, renameFile } =
     useFile();
   const { isShowCamera, showCamera, isShowPrevious, showPrevious } =
     usePageSwitch();
@@ -49,6 +49,7 @@ export default function Index() {
 
     (async () => {
       try {
+        /** ファイルアップロード */
         await fetch(actionData?.url, {
           method: 'PUT',
           body: files[currentId].file,
@@ -57,13 +58,13 @@ export default function Index() {
           },
         });
 
+        /** ファイルUrl取得 */
         const response = await getS3PresignedUrl({
           key: files[currentId].path + '/' + files[currentId].currentName,
         });
 
         if (!response.error && response?.data?.getS3PresignedUrl?.url) {
-          console.log('成功');
-          updateUrl({ url: response?.data?.getS3PresignedUrl?.url, currentId });
+          setUrl({ url: response?.data?.getS3PresignedUrl?.url, currentId });
           toast({
             title: '成功しました！',
             description: '操作が正常に完了しました。',
@@ -95,14 +96,17 @@ export default function Index() {
     if (files[currentId].path == null || files[currentId].currentName == null)
       return;
 
-    isUploaded(currentId);
-
     const formData = new FormData();
     formData.append(
-      'key',
+      'oldKey',
+      `${files[currentId].path}/${files[currentId].originalName}`,
+    );
+    formData.append(
+      'newKey',
       `${files[currentId].path}/${files[currentId].currentName}`,
     );
     formData.append('fileType', files[currentId].file.type);
+    isUploaded(currentId);
     submit(formData, { method: 'POST' });
   };
 
@@ -117,8 +121,19 @@ export default function Index() {
         '_' +
         result.data?.analyzeInvoice.company +
         '_' +
-        result.data?.analyzeInvoice.amount,
+        result.data?.analyzeInvoice.amount +
+        '.jpg',
     );
+    toast({
+      title: '成功しました！',
+      description: '操作が正常に完了しました。',
+      variant: 'default',
+      action: (
+        <div className="flex items-center gap-2">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+        </div>
+      ),
+    });
   };
 
   return (
