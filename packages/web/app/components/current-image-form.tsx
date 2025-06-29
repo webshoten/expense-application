@@ -2,7 +2,7 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useFile } from '@/context/file-provider';
-import { Edit, MoreHorizontal } from 'lucide-react';
+import { Edit, MoreHorizontal, Trash2, Upload } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -13,11 +13,13 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 
-export const PreviousImageForm = ({
+export const CurrentImageForm = ({
   onUpload,
+  onDelete,
   onAI,
 }: {
   onUpload: (currentId: string) => void;
+  onDelete: (key: string) => void;
   onAI: (currentId: string, action: 'ファイル名を生成') => void;
 }) => {
   const { renamePath, currentId, renameFile, files, getFilePreviews } =
@@ -108,7 +110,19 @@ export const PreviousImageForm = ({
                   }}
                   className="flex-1 w-full"
                 >
-                  アップロード
+                  <Upload className="mr-2 h-5 w-5" />
+                  <span className={'sm:block hidden'}>アップロード</span>
+                </Button>
+                <Button
+                  onClick={() => {
+                    onDelete(
+                      `${files[currentId].path}/${files[currentId].currentName}`,
+                    );
+                  }}
+                  className="flex-1 w-full"
+                >
+                  <Trash2 className="mr-2 h-5 w-5" />
+                  <span className={'sm:block hidden'}>削除</span>
                 </Button>
               </div>
             </div>

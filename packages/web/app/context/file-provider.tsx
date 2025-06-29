@@ -14,7 +14,14 @@ type FileInfo = {
 
 type FileContextType = {
   files: Record<string, FileInfo>;
-  addFile: (newFile: File) => void;
+  addFile: ({
+    newFile,
+    isUploaded,
+  }: {
+    newFile: File;
+    isUploaded?: boolean;
+  }) => void;
+  removeFile: (currentId: string) => void;
   renameFile: (id: string, newName: string) => void;
   renamePath: (id: string, newPath: string) => void;
   getFilePreviews: (id: string) => string | undefined;
@@ -36,8 +43,13 @@ export function FileProvider({ children }: { children: ReactNode }) {
 
   const yyyymm = new Date().toISOString().slice(0, 7).replace(/-/, '');
 
-  // ファイルを追加
-  const addFile = (newFile: File) => {
+  const addFile = ({
+    newFile,
+    isUploaded,
+  }: {
+    newFile: File;
+    isUploaded?: boolean;
+  }) => {
     const id = generateFileId();
     setFiles((prev) => {
       return {
@@ -48,7 +60,7 @@ export function FileProvider({ children }: { children: ReactNode }) {
           currentName: newFile.name,
           path: yyyymm,
           lastModified: newFile.lastModified,
-          isUploaded: false,
+          isUploaded: isUploaded ?? false,
           url: null,
         },
       };
@@ -62,6 +74,13 @@ export function FileProvider({ children }: { children: ReactNode }) {
         ...prev,
         [currentId]: { ...prev[currentId], url },
       };
+    });
+  };
+
+  const removeFile = (currentId: string) => {
+    setFiles((prevFiles) => {
+      const { [currentId]: _, ...rest } = prevFiles; //キーを削除
+      return rest;
     });
   };
 
@@ -115,6 +134,7 @@ export function FileProvider({ children }: { children: ReactNode }) {
         files,
         addFile,
         renameFile,
+        removeFile,
         getFilePreviews,
         renamePath,
         setCurrentId,

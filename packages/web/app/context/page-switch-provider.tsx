@@ -2,9 +2,9 @@ import { createContext, ReactNode, useContext, useState } from 'react';
 
 type PageSwitchContextType = {
   isShowCamera: boolean;
-  isShowPrevious: boolean;
+  isShowCurrent: boolean;
   showCamera: (isShow: boolean) => void;
-  showPrevious: (isShow: boolean) => void;
+  showCurrent: (isShow: boolean) => void;
 };
 
 const PageSwitchContext = createContext<PageSwitchContextType | undefined>(
@@ -13,23 +13,23 @@ const PageSwitchContext = createContext<PageSwitchContextType | undefined>(
 
 export function PageSwitchProvider({ children }: { children: ReactNode }) {
   const [isShowCamera, setIsShowCamera] = useState(false);
-  const [isShowPrevious, setIsShowPrevious] = useState(false);
+  const [isShowCurrent, setIsShowCurrent] = useState(false);
 
   const showCamera = (isShow: boolean) => {
     setIsShowCamera(isShow);
   };
 
-  const showPrevious = (isShow: boolean) => {
-    setIsShowPrevious(isShow);
+  const showCurrent = (isShow: boolean) => {
+    setIsShowCurrent(isShow);
   };
 
   return (
     <PageSwitchContext.Provider
       value={{
         isShowCamera,
-        isShowPrevious,
+        isShowCurrent,
         showCamera,
-        showPrevious,
+        showCurrent,
       }}
     >
       {children}

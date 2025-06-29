@@ -6,7 +6,7 @@ import { Camera, ImageIcon, Images } from 'lucide-react';
 
 export default function CameraLayout() {
   const navigate = useNavigate();
-  const { showCamera, showPrevious } = usePageSwitch();
+  const { showCamera, showCurrent } = usePageSwitch();
   const { files, currentId } = useFile();
 
   return (
@@ -35,11 +35,11 @@ export default function CameraLayout() {
               disabled={!currentId || !files[currentId]}
               onClick={() => {
                 navigate('/camera');
-                showPrevious(true);
+                showCurrent(true);
               }}
             >
               <ImageIcon className="mr-2 h-5 w-5" />
-              <span className={'sm:block hidden'}>直近の写真</span>
+              <span className={'sm:block hidden'}>現在の写真</span>
             </Button>
             <Button
               variant="outline"

@@ -13,7 +13,16 @@ export default $config({
     /**
      *  S3
      */
-    const bucket = new sst.aws.Bucket("MyBucket");
+    const bucket = new sst.aws.Bucket("MyBucket", {
+      cors: {
+        allowHeaders: ["*"],
+        allowMethods: ["GET", "PUT", "POST", "DELETE", "HEAD"],
+        allowOrigins: ["*"], // 本番環境では適切なドメインに制限してください
+        exposeHeaders: ["ETag", "Content-Length", "Content-Type"],
+        maxAge: "3000 seconds",
+      },
+      public: false, // プライベートバケットのまま
+    });
 
     /**
      *  Remix(CloudFront+Lambda+s3)
