@@ -1,4 +1,5 @@
 // app/contexts/file.context.tsx
+import { yyyymm } from '@/lib/date';
 import { createContext, ReactNode, useContext, useState } from 'react';
 
 // ファイル情報の型定義
@@ -40,8 +41,6 @@ export function FileProvider({ children }: { children: ReactNode }) {
   const setCurrentId = (id: string | null) => {
     setId(id);
   };
-
-  const yyyymm = new Date().toISOString().slice(0, 7).replace(/-/, '');
 
   const addFile = ({
     newFile,

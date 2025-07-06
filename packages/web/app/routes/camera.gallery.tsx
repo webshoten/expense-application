@@ -2,13 +2,23 @@
 import { getPresignedGetUrl, listAllObjects } from '@/actions/s3';
 import { ThumbnailCard } from '@/components/thumbnail-card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useFile } from '@/context/file-provider';
 import { usePageSwitch } from '@/context/page-switch-provider';
 import { useGetFile } from '@/hooks/use-get-file';
+import { yyyymm } from '@/lib/date';
+import { downloadImage } from '@/lib/fetch';
+import { arrayBufferToFile, createZipFromFiles } from '@/lib/file';
 import { _Object } from '@aws-sdk/client-s3';
-import { LoaderFunction } from '@remix-run/node';
-import { useLoaderData, useNavigate } from '@remix-run/react';
-import { Calendar } from 'lucide-react';
+import { ActionFunctionArgs, LoaderFunction } from '@remix-run/node';
+import {
+  useActionData,
+  useLoaderData,
+  useLocation,
+  useNavigate,
+  useSubmit,
+} from '@remix-run/react';
+import { Download } from 'lucide-react';
 import { useEffect } from 'react';
 
 export type ImageObject = _Object & {
@@ -36,15 +46,57 @@ export const loader: LoaderFunction = async () => {
   });
 };
 
+export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+  const actionType = formData.get('actionType') as 'download';
+  const yyyymm = formData.get('yyyymm') as string;
+
+  //ビジネスロジック
+  const objs = await listAllObjects();
+  const targetMonthObjs = objs.filter((a) => a.Key?.indexOf(yyyymm) !== -1);
+  const keys = targetMonthObjs.map((a) => a.Key).filter((a) => a != null);
+
+  let urls: { filename: string; url: string }[] = [];
+
+  for (const key of keys) {
+    const filename = key.split('/')[1];
+    const url = await getPresignedGetUrl({ key });
+    urls.push({ filename, url });
+  }
+
+  return { success: true, urls, actionType, status: 200 };
+}
+
 export default function CameraGalleryRoute() {
   const { objects } = useLoaderData<LoaderData>();
+  const actionData = useActionData<typeof action>();
+
+  const location = useLocation();
   const navigate = useNavigate();
+  const submit = useSubmit();
   const { showCamera, showCurrent } = usePageSwitch();
   const { addFile, removeFile } = useFile();
   const { getFile } = useGetFile();
 
   const searchParams = new URLSearchParams(location.search);
   const deleteId = searchParams.get('deleteId');
+
+  useEffect(() => {
+    if (actionData?.actionType === 'download') {
+      const { urls } = actionData;
+
+      const files: File[] = [];
+      (async () => {
+        for (const obj of urls) {
+          const arrayBuffer = await downloadImage(obj.url);
+          const file = arrayBufferToFile(arrayBuffer, obj.filename);
+          files.push(file);
+        }
+        /** ダウンロード */
+        await createZipFromFiles(files);
+      })();
+    }
+  }, [actionData]);
 
   useEffect(() => {
     if (deleteId) {
@@ -78,6 +130,14 @@ export default function CameraGalleryRoute() {
     return monthKey;
   };
 
+  const handleDownload = () => {
+    const formData = new FormData();
+    formData.append('yyyymm', yyyymm);
+    /** actionへ */
+    formData.append('actionType', 'download');
+    submit(formData, { method: 'POST' });
+  };
+
   const groupedImages = groupByMonth(objects);
   const sortedMonths = Object.keys(groupedImages).sort().reverse(); // 新しい月から表示
 
@@ -93,7 +153,15 @@ export default function CameraGalleryRoute() {
           {sortedMonths.map((monthKey) => (
             <div key={monthKey}>
               <div className="flex items-center gap-2 mb-4">
-                <Calendar className="w-5 h-5" />
+                <Button
+                  onClick={() => {
+                    handleDownload();
+                  }}
+                  variant="outline"
+                  className="py-0"
+                >
+                  <Download className="w-5 h-5" />
+                </Button>
                 <h2 className="text-2xl font-semibold">
                   {formatMonthName(monthKey)}
                 </h2>
@@ -124,22 +192,6 @@ export default function CameraGalleryRoute() {
                       navigate('/camera');
                     }}
                   />
-                  // <ImageDialog
-                  //   key={index}
-                  //   selectedImage={selectedImage}
-                  //   onDelete={() => {
-                  //     const formData = new FormData();
-                  //     formData.append('key', selectedImage?.Key ?? '');
-                  //     submit(formData, { method: 'POST' });
-                  //   }}
-                  // >
-                  //   <ThumbnailCard
-                  //     image={image}
-                  //     onClick={() => {
-                  //       setSelectedImage(image);
-                  //     }}
-                  //   />
-                  // </ImageDialog>
                 ))}
               </div>
             </div>
