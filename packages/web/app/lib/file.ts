@@ -38,7 +38,10 @@ function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
     });
 }
 
-export async function createZipFromFiles(files: File[]): Promise<void> {
+export async function createZipFromFiles(
+    files: File[],
+    yyyymm: string,
+): Promise<void> {
     const zip = new JSZip();
 
     // 各ファイルをZIPに追加
@@ -51,5 +54,5 @@ export async function createZipFromFiles(files: File[]): Promise<void> {
     const content = await zip.generateAsync({ type: "blob" });
 
     // ダウンロード
-    saveAs(content, "archive.zip");
+    saveAs(content, yyyymm + "_archive.zip");
 }

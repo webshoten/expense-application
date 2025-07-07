@@ -33,7 +33,6 @@ export async function action({ request }: ActionFunctionArgs) {
       const url = await getPresignedPutUrl({ newKey, oldKey, fileType });
       return { success: true, url, actionType, status: 200 };
     }
-
     if (actionType === 'delete') {
       const key = formData.get('key') as string;
       await deleteObject({ key });

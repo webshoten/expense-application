@@ -12,9 +12,7 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // S3クライアントの設定
-export const s3Client = new S3Client({
-    region: process.env.AWS_REGION,
-});
+export const s3Client = new S3Client({});
 
 /**
  * ファイルアップロード用PresignedUrl発行

@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { getPresignedGetUrl, listAllObjects } from '@/actions/s3';
+import { getUrls } from '@/actions/urls';
 import { ThumbnailCard } from '@/components/thumbnail-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -55,16 +56,8 @@ export async function action({ request }: ActionFunctionArgs) {
   const objs = await listAllObjects();
   const targetMonthObjs = objs.filter((a) => a.Key?.indexOf(yyyymm) !== -1);
   const keys = targetMonthObjs.map((a) => a.Key).filter((a) => a != null);
-
-  let urls: { filename: string; url: string }[] = [];
-
-  for (const key of keys) {
-    const filename = key.split('/')[1];
-    const url = await getPresignedGetUrl({ key });
-    urls.push({ filename, url });
-  }
-
-  return { success: true, urls, actionType, status: 200 };
+  const urls = await getUrls(keys);
+  return { success: true, urls, yyyymm, actionType, status: 200 };
 }
 
 export default function CameraGalleryRoute() {
@@ -93,7 +86,7 @@ export default function CameraGalleryRoute() {
           files.push(file);
         }
         /** ダウンロード */
-        await createZipFromFiles(files);
+        await createZipFromFiles(files, actionData.yyyymm);
       })();
     }
   }, [actionData]);
