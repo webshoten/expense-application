@@ -1,6 +1,10 @@
 import SchemaBuilder from "@pothos/core";
 import { analyzeInvoiceResolver } from "./analize-invoice-resolver";
-import { getPresignedGetUrl } from "@/actions/s3";
+import {
+    deleteObject,
+    getPresignedGetUrl,
+    getPresignedPutUrls,
+} from "@/actions/s3";
 
 /**
  *  Type
@@ -18,11 +22,17 @@ export interface S3PresignedUrl {
     url: string;
 }
 
+export interface S3PresignedUrls {
+    getUrl: string;
+    putUrl: string;
+}
+
 const builder = new SchemaBuilder<{
     Objects: {
         Employee: Employee;
         Invoice: Invoice;
         S3PresignedUrl: S3PresignedUrl;
+        S3PresignedUrls: S3PresignedUrls;
     };
 }>({});
 
@@ -40,6 +50,14 @@ builder.objectType("S3PresignedUrl", {
         url: t.exposeString("url"),
     }),
 });
+
+builder.objectType("S3PresignedUrls", {
+    fields: (t) => ({
+        getUrl: t.exposeString("getUrl"),
+        putUrl: t.exposeString("putUrl"),
+    }),
+});
+
 builder.objectType("Invoice", {
     fields: (t) => ({
         company: t.exposeString("company"),
@@ -111,6 +129,34 @@ builder.mutationType({
             resolve: async (_, { key }) => {
                 const url = await getPresignedGetUrl({ key });
                 return { url };
+            },
+        }),
+
+        getS3PresignedUrls: t.field({
+            type: "S3PresignedUrls",
+            args: {
+                key: t.arg.string({ required: true }),
+                fileType: t.arg.string({ required: true }),
+            },
+            resolve: async (_, { key, fileType }) => {
+                const getUrl = await getPresignedGetUrl({ key });
+                const putUrl = await getPresignedPutUrls({ key, fileType });
+                return { getUrl, putUrl };
+            },
+        }),
+
+        deleteS3: t.field({
+            type: "Boolean",
+            args: {
+                key: t.arg.string({ required: true }),
+            },
+            resolve: async (_, { key }) => {
+                try {
+                    await deleteObject({ key });
+                    return true;
+                } catch (error) {
+                    return false;
+                }
             },
         }),
     }),

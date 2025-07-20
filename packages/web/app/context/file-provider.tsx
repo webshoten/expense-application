@@ -45,9 +45,11 @@ export function FileProvider({ children }: { children: ReactNode }) {
   const addFile = ({
     newFile,
     isUploaded,
+    url,
   }: {
     newFile: File;
     isUploaded?: boolean;
+    url?: string;
   }) => {
     const id = generateFileId();
     setFiles((prev) => {
@@ -60,7 +62,7 @@ export function FileProvider({ children }: { children: ReactNode }) {
           path: yyyymm,
           lastModified: newFile.lastModified,
           isUploaded: isUploaded ?? false,
-          url: null,
+          url: url ?? null,
         },
       };
     });

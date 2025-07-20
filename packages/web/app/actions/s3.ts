@@ -56,6 +56,30 @@ export const getPresignedPutUrl = async (
 };
 
 /**
+ * ファイルアップロード用PresignedUrl発行
+ */
+export const getPresignedPutUrls = async (
+    { key, fileType }: {
+        key: string;
+        fileType: string;
+    },
+) => {
+    try {
+        const command = new PutObjectCommand({
+            Bucket: Resource.MyBucket.name!,
+            Key: key,
+            ContentType: fileType,
+        });
+        const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+
+        return url;
+    } catch (error) {
+        console.error("Error generating upload URL:", error);
+        throw error;
+    }
+};
+
+/**
  * ファイルリストを取得
  */
 export const listAllObjects = async () => {

@@ -1,11 +1,9 @@
 import { CurrentImageForm } from './current-image-form';
 
 export const CurrentImageLayout = ({
-  onUpload,
   onDelete,
   onAI,
 }: {
-  onUpload: (currentId: string) => void;
   onDelete: (key: string) => void;
   onAI: (currentId: string, action: 'ファイル名を生成') => void;
 }) => {
@@ -18,7 +16,7 @@ export const CurrentImageLayout = ({
         <p className="mt-2 text-gray-600">写真を撮影してみましょう</p>
       </div>
       <div className="space-y-4">
-        <CurrentImageForm onUpload={onUpload} onAI={onAI} onDelete={onDelete} />
+        <CurrentImageForm onAI={onAI} onDelete={onDelete} />
       </div>
     </div>
   );

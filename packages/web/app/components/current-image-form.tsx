@@ -2,7 +2,7 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useFile } from '@/context/file-provider';
-import { Edit, MoreHorizontal, Trash2, Upload } from 'lucide-react';
+import { Edit, MoreHorizontal, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -14,11 +14,9 @@ import {
 } from './ui/dropdown-menu';
 
 export const CurrentImageForm = ({
-  onUpload,
   onDelete,
   onAI,
 }: {
-  onUpload: (currentId: string) => void;
   onDelete: (key: string) => void;
   onAI: (currentId: string, action: 'ファイル名を生成') => void;
 }) => {
@@ -86,7 +84,7 @@ export const CurrentImageForm = ({
                       variant="outline"
                       className="w-[20%]"
                     >
-                      AI使用 <MoreHorizontal className="h-4 w-4" />
+                      AI <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
@@ -103,16 +101,6 @@ export const CurrentImageForm = ({
               </div>
 
               <div className="space-y-2 w-full">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    onUpload(currentId);
-                  }}
-                  className="flex-1 w-full"
-                >
-                  <Upload className="mr-2 h-5 w-5" />
-                  <span className={'sm:block hidden'}>アップロード</span>
-                </Button>
                 <Button
                   onClick={() => {
                     onDelete(

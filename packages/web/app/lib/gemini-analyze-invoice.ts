@@ -10,7 +10,7 @@ export async function geminiAnalyzeInvoice({ imageUrl }: {
         const { data: base64, mimeType } = await readImageFileBuffer(imageUrl);
 
         const prompt =
-            `このレシートの日付(yyyymmdd)と会社と金額をカンマ区切りで返してください`;
+            `このレシートの日付(yyyymmdd)と会社と金額(合計)をカンマ区切りで返してください`;
         const imagePart = {
             inlineData: {
                 data: base64,
