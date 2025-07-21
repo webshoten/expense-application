@@ -14,7 +14,8 @@ import { CheckCircle } from 'lucide-react';
 
 export default function Index() {
   const { toast } = useToast();
-  const { files, addFile, currentId, renameFile, removeFile } = useFile();
+  const { files, addFile, currentId, renameFile, removeFile, setUrl } =
+    useFile();
   const { isShowCamera, showCamera, isShowCurrent, showCurrent } =
     usePageSwitch();
   const { analyzeInvoice } = analyzeInvoiceClient();
@@ -47,7 +48,7 @@ export default function Index() {
       const result = await analyzeInvoice({
         imageUrl: files[currentId].url,
       });
-      renameFile(
+      const file = renameFile(
         currentId,
         result.data?.analyzeInvoice.yyyymmdd +
           '_' +
@@ -56,6 +57,25 @@ export default function Index() {
           result.data?.analyzeInvoice.amount +
           '.jpg',
       );
+      const { data } = await getS3PresignedUrls({
+        key: `${file.path}/${file.currentName}`,
+        fileType: file.file.type,
+      });
+      if (
+        data?.getS3PresignedUrls.putUrl == null ||
+        data?.getS3PresignedUrls.getUrl == null
+      )
+        return;
+
+      setUrl({ currentId, url: data?.getS3PresignedUrls.getUrl });
+
+      /** ファイルアップロード */
+      await putFile({
+        file: file.file,
+        type: file.file.type,
+        url: data?.getS3PresignedUrls.putUrl,
+      });
+
       toast({
         title: '成功しました！',
         description: '操作が正常に完了しました。',

@@ -1,5 +1,8 @@
 // app/contexts/file.context.tsx
+import { useGetFile } from '@/hooks/use-get-file';
 import { yyyymm } from '@/lib/date';
+import { asyncReduce } from '@/lib/utils';
+import { ImageObject } from '@/routes/camera.gallery';
 import { createContext, ReactNode, useContext, useState } from 'react';
 
 // ファイル情報の型定義
@@ -18,13 +21,22 @@ type FileContextType = {
   addFile: ({
     newFile,
     isUploaded,
+    url,
   }: {
     newFile: File;
     isUploaded?: boolean;
+    url?: string;
   }) => void;
+  addFiles: ({
+    images,
+    isUploaded,
+  }: {
+    images: ImageObject[];
+    isUploaded: boolean;
+  }) => Promise<void>;
   removeFile: (currentId: string) => void;
-  renameFile: (id: string, newName: string) => void;
-  renamePath: (id: string, newPath: string) => void;
+  renameFile: (id: string, newName: string) => FileInfo;
+  renamePath: (id: string, newPath: string) => FileInfo;
   getFilePreviews: (id: string) => string | undefined;
   setCurrentId: (id: string | null) => void;
   currentId: string | null;
@@ -37,9 +49,45 @@ const FileContext = createContext<FileContextType | undefined>(undefined);
 export function FileProvider({ children }: { children: ReactNode }) {
   const [files, setFiles] = useState<Record<string, FileInfo>>({});
   const [id, setId] = useState<string | null>(null);
+  const { getFile } = useGetFile();
 
   const setCurrentId = (id: string | null) => {
     setId(id);
+  };
+
+  const addFiles = async ({
+    images,
+    isUploaded,
+  }: {
+    images: ImageObject[];
+    isUploaded: boolean;
+  }) => {
+    const result = await asyncReduce(
+      images,
+      async (acc, image) => {
+        const id = generateFileId();
+        const file = await getFile({
+          filename: image.Key ?? '',
+          url: image.presignedUrl,
+        });
+        const filename = image?.Key?.split('/')[1] as string | undefined;
+        const path = image?.Key?.split('/')[0] as string | undefined;
+        acc[id] = {
+          file,
+          originalName: filename ?? '',
+          currentName: filename ?? '',
+          path: path ?? '',
+          lastModified: image.LastModified
+            ? new Date(image.LastModified).getTime()
+            : new Date().getTime(),
+          isUploaded: isUploaded,
+          url: image.presignedUrl,
+        };
+        return acc;
+      },
+      {} as Record<string, FileInfo>,
+    );
+    setFiles(result);
   };
 
   const addFile = ({
@@ -96,6 +144,11 @@ export function FileProvider({ children }: { children: ReactNode }) {
         },
       };
     });
+
+    return {
+      ...files[id],
+      currentName: newName,
+    } as FileInfo;
   };
 
   const renamePath = (id: string, newPath: string) => {
@@ -108,6 +161,11 @@ export function FileProvider({ children }: { children: ReactNode }) {
         },
       };
     });
+
+    return {
+      ...files[id],
+      path: newPath,
+    } as FileInfo;
   };
 
   // ファイルプレビュー情報を取得
@@ -134,6 +192,7 @@ export function FileProvider({ children }: { children: ReactNode }) {
       value={{
         files,
         addFile,
+        addFiles,
         renameFile,
         removeFile,
         getFilePreviews,
@@ -160,4 +219,22 @@ export function useFile() {
     throw new Error('useFile must be used within a FileProvider');
   }
   return context;
+}
+
+/**
+ * ファイル名（ currentName）に一致する最初のキーを返す
+ * @param record Record<string, FileInfo>
+ * @param fileName 検索対象のファイル名
+ * @returns 一致したキー（見つからなければ `undefined`）
+ */
+export function findFirstKeyByFileName(
+  record: Record<string, FileInfo>,
+  fileName: string,
+): string | undefined {
+  for (const [key, fileInfo] of Object.entries(record)) {
+    if (fileInfo.originalName === fileName) {
+      return key; // 最初に一致したキーを返す
+    }
+  }
+  return undefined;
 }

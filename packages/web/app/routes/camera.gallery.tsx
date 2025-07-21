@@ -4,9 +4,8 @@ import { getUrls } from '@/actions/urls';
 import { ThumbnailCard } from '@/components/thumbnail-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useFile } from '@/context/file-provider';
+import { findFirstKeyByFileName, useFile } from '@/context/file-provider';
 import { usePageSwitch } from '@/context/page-switch-provider';
-import { useGetFile } from '@/hooks/use-get-file';
 import { yyyymm } from '@/lib/date';
 import { downloadImage } from '@/lib/fetch';
 import { arrayBufferToFile, createZipFromFiles } from '@/lib/file';
@@ -68,8 +67,7 @@ export default function CameraGalleryRoute() {
   const navigate = useNavigate();
   const submit = useSubmit();
   const { showCamera, showCurrent } = usePageSwitch();
-  const { addFile, removeFile } = useFile();
-  const { getFile } = useGetFile();
+  const { setCurrentId, removeFile, addFiles, files } = useFile();
 
   const searchParams = new URLSearchParams(location.search);
   const deleteId = searchParams.get('deleteId');
@@ -131,6 +129,20 @@ export default function CameraGalleryRoute() {
     submit(formData, { method: 'POST' });
   };
 
+  useEffect(() => {
+    (async () => {
+      if (objects) {
+        await addFiles({ images: objects, isUploaded: true });
+      }
+    })();
+  }, [objects]);
+
+  useEffect(() => {
+    if (Object.keys(files).length > 0) {
+      debugger;
+    }
+  }, [files]);
+
   const groupedImages = groupByMonth(objects);
   const sortedMonths = Object.keys(groupedImages).sort().reverse(); // 新しい月から表示
 
@@ -169,17 +181,12 @@ export default function CameraGalleryRoute() {
                     key={index}
                     image={image}
                     onClick={async () => {
-                      if (image.Key == null || image.presignedUrl == null)
-                        return;
-                      const filename = image.Key.split('/')[1] as
+                      const filename = image?.Key?.split('/')[1] as
                         | string
                         | undefined;
-                      if (filename == null) return;
-                      const file = await getFile({
-                        filename,
-                        url: image.presignedUrl,
-                      });
-                      addFile({ newFile: file, isUploaded: true });
+                      const id = findFirstKeyByFileName(files, filename || '');
+                      debugger;
+                      setCurrentId(id ?? null);
                       showCamera(false);
                       showCurrent(true);
                       navigate('/camera');

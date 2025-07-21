@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useFile } from '@/context/file-provider';
 import { Edit, MoreHorizontal, Trash2 } from 'lucide-react';
+import { useEffect } from 'react';
 import { Button } from './ui/button';
 import {
   DropdownMenu,
@@ -28,6 +29,12 @@ export const CurrentImageForm = ({
     console.log(action);
     onAI(currentId, action);
   };
+
+  useEffect(() => {
+    if (Object.keys(files).length > 0) {
+      debugger;
+    }
+  }, [files]);
 
   return (
     <>
